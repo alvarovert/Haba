@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Dependencias
+node_modules/
+package-lock.json
+
+# Archivos de compilación / distribución
+build/
+dist/
+
+# Assets locales (según lo solicitado)
+src/assets/
