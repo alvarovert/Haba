@@ -1,0 +1,33 @@
+{
+  "name": "haba",
+  "version": "1.0.0",
+  "description": " Tracker de gastos personales",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.alvaro.haba",
+    "productName": "Haba",
+    "directories": {
+      "buildResources": "build"
+    },
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.finance"
+    },
+    "win": {
+      "icon": "build/icon.ico"
+    }
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "objects-to-csv": "^1.3.6"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  }
+}
