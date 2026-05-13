@@ -32,3 +32,31 @@ body {
 
 /* Chart.js overrides */
 canvas { max-height: 100%; max-width: 100%; }
+
+
+/* 1. Área segura superior para los semáforos de Mac */
+.mac-titlebar-spacer {
+    height: 40px; /* Altura segura para los botones de macOS */
+    width: 100%;
+    /* Si tienes un menú lateral (sidebar), asegúrate de que el espaciador cubra el tope */
+    display: flex;
+    flex-shrink: 0;
+}
+
+/* 2. Ajuste para que el resto del contenido fluya correctamente */
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column; /* Para que el espaciador quede arriba y el contenido abajo */
+    overflow: hidden; /* Evita scroll en toda la ventana, el scroll debe ir en los contenedores */
+}
+
+/* El contenedor principal de tu app (debajo del espaciador) */
+.app-container {
+    display: flex;
+    flex-grow: 1;
+    height: calc(100vh - 40px);
+}

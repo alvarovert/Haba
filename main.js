@@ -1,9 +1,9 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+ // Añade 'Menu' a la importación
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 const ObjectsToCsv = require('objects-to-csv');
 const fs = require('fs');
-
 const store = new Store();
 
 // Inicializar datos si no existen
@@ -33,7 +33,76 @@ function createWindow() {
     mainWindow.loadFile('src/index.html');
 }
 
+function createCustomMenu() {
+    const isMac = process.platform === 'darwin';
+
+    const template = [
+        // Menú de la Aplicación (obligatorio en macOS)
+        ...(isMac ? [{
+            label: app.name,
+            submenu: [
+                { role: 'about' },
+                { type: 'separator' },
+                { role: 'hide' },
+                { role: 'hideOthers' },
+                { role: 'unhide' },
+                { type: 'separator' },
+                { role: 'quit' }
+            ]
+        }] : []),
+        // Menú Archivo
+        {
+            label: 'Archivo',
+            submenu: [
+                isMac ? { role: 'close' } : { role: 'quit' }
+            ]
+        },
+        // Menú Edición (Necesario para que funcionen atajos como Cmd+C, Cmd+V en inputs)
+        {
+            label: 'Edición',
+            submenu: [
+                { role: 'undo' },
+                { role: 'redo' },
+                { type: 'separator' },
+                { role: 'cut' },
+                { role: 'copy' },
+                { role: 'paste' },
+                { role: 'selectAll' }
+            ]
+        },
+        // EL MENÚ VENTANA: LA SOLUCIÓN AL RECHAZO DE APPLE
+        {
+            label: 'Window', // Lo dejamos en inglés porque Apple revisa en ese idioma
+            submenu: [
+                {
+                    label: 'Open Main Window', // El botón mágico que pide Apple
+                    accelerator: 'CmdOrCtrl+N',
+                    click: () => {
+                        // Si la ventana está cerrada, la crea. Si está abierta, la enfoca.
+                        if (BrowserWindow.getAllWindows().length === 0) {
+                            createWindow();
+                        } else if (mainWindow) {
+                            mainWindow.focus();
+                        }
+                    }
+                },
+                { type: 'separator' },
+                { role: 'minimize' },
+                { role: 'zoom' },
+                ...(isMac ? [
+                    { type: 'separator' },
+                    { role: 'front' },
+                ] : [])
+            ]
+        }
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
+
 app.whenReady().then(() => {
+    createCustomMenu(); // Configura el menú personalizado
     createWindow();
 
     app.on('activate', () => {

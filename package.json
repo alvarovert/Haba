@@ -1,25 +1,47 @@
 {
+  "author": "Alvaro Menacho",
   "name": "haba",
-  "version": "1.0.0",
-  "description": " Tracker de gastos personales",
+  "version": "1.0.3",
+  "description": "Tracker de gastos personales",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:mac": "electron-builder --mac",
+    "build:mac": "electron-builder --macos",
     "build:win": "electron-builder --win"
   },
   "build": {
-    "appId": "com.alvaro.haba",
+    "appId": "com.alvaromenacho.haba",
     "productName": "Haba",
     "directories": {
       "buildResources": "build"
     },
     "mac": {
       "icon": "build/icon.icns",
-      "category": "public.app-category.finance"
+      "category": "public.app-category.finance",
+      "target": [
+        {
+          "target": "mas",
+          "arch": "universal"
+        }
+      ],
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "provisioningProfile": "build/embedded.provisionprofile"
+    },
+    "mas": {
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
+      "provisioningProfile": "build/embedded.provisionprofile"
     },
     "win": {
-      "icon": "build/icon.ico"
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        }
+      ]
     }
   },
   "dependencies": {
