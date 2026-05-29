@@ -4,6 +4,7 @@ const path = require('path');
 const Store = require('electron-store');
 const ObjectsToCsv = require('objects-to-csv');
 const fs = require('fs');
+const nodemailer = require('nodemailer'); 
 const store = new Store();
 
 // Inicializar datos si no existen
@@ -203,4 +204,48 @@ ipcMain.handle('export-csv', async () => {
         return { success: true };
     }
     return { success: false };
+});
+
+// ====== SECCIÓN DE ENVÍO DE CORREO (TU OPINIÓN) ======
+
+ipcMain.handle('send-feedback', async (event, data) => {
+    try {
+        // Configuración de la cuenta que ENVÍA el correo (Invisible para el usuario)
+        let transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: 'usuariohaba@gmail.com',
+                pass: 'enlxugxjhqpqkznw'
+            }
+        });
+
+        // Configuración del correo a enviar
+        let mailOptions = {
+            from: '"Haba App" <usuariohaba@gmail.com>',
+            to: 'alvaromenachomd@gmail.com', // El correo que RECIBE (tu correo personal)
+            subject: `Nueva opinión en Haba de: ${data.name}`,
+            text: `Usuario: ${data.name}\n\nMensaje:\n${data.message}`,
+            html: `
+                <div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #fbfbfe; border-radius: 12px; border: 1px solid #eee;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <h2 style="color: #4F46E5; margin: 0;">Haba 🍃</h2>
+                        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">Nueva opinión recibida</p>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <p style="margin-top: 0; color: #374151;"><strong>Remitente:</strong> <span style="color: #111827;">${data.name}</span></p>
+                        <p style="color: #374151; margin-bottom: 5px;"><strong>Mensaje:</strong></p>
+                        <div style="background: #f9fafb; padding: 15px; border-radius: 6px; color: #1f2937; line-height: 1.5; white-space: pre-wrap;">${data.message}</div>
+                    </div>
+                </div>
+            `
+        };
+
+        // Enviar el correo
+        await transporter.sendMail(mailOptions);
+        return { success: true };
+
+    } catch (error) {
+        console.error("Error enviando correo:", error);
+        throw error; // Lanza el error para que el frontend lo sepa
+    }
 });

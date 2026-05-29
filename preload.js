@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld('api', {
     deleteExpense: (id) => ipcRenderer.invoke('delete-expense', id),       // NUEVO
     editCategory: (oldName, newName) => ipcRenderer.invoke('edit-category', { oldName, newName }),
     deleteCategory: (categoryName) => ipcRenderer.invoke('delete-category', categoryName),
-    exportCsv: () => ipcRenderer.invoke('export-csv')
+    exportCsv: () => ipcRenderer.invoke('export-csv'),
+    sendFeedback: (data) => ipcRenderer.invoke('send-feedback', data)
 });

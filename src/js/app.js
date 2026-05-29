@@ -51,7 +51,7 @@ function applyFilter() {
 
 function updateDashboardStats(expenses) {
     if (expenses.length === 0) {
-        document.getElementById('stat-total').innerText = '$0.00';
+        document.getElementById('stat-total').innerText = 'S/0.00';
         document.getElementById('stat-top-cat').innerText = '-';
         document.getElementById('stat-top-day').innerText = '-';
         return;
@@ -59,7 +59,7 @@ function updateDashboardStats(expenses) {
 
     // Total
     const total = expenses.reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
-    document.getElementById('stat-total').innerText = `$${total.toFixed(2)}`;
+    document.getElementById('stat-total').innerText = `S/${total.toFixed(2)}`;
 
     // Top Categoria
     const catCounts = {};
@@ -204,7 +204,7 @@ function renderHistoryTable() {
                     </span>
                 </td>
                 <td class="py-4 px-6 text-sm text-gray-500">${e.source}</td>
-                <td class="py-4 px-6 text-sm text-gray-900 font-semibold text-right">$${parseFloat(e.amount).toFixed(2)}</td>
+                <td class="py-4 px-6 text-sm text-gray-900 font-semibold text-right">S/${parseFloat(e.amount).toFixed(2)}</td>
                 <td class="py-4 px-4 text-sm text-center">
                     <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onclick="openEditModal('${e.id}')" class="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
@@ -294,3 +294,74 @@ document.getElementById('edit-expense-form').addEventListener('submit', async (e
     editModal.classList.remove('flex');
     btn.innerText = originalText;
 });
+
+// ====== SECCIÓN: TU OPINIÓN (FEEDBACK) ======
+
+window.openFeedbackModal = () => {
+    const modal = document.getElementById('feedback-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Limpiar campos al abrir
+    document.getElementById('feedback-name').value = '';
+    document.getElementById('feedback-message').value = '';
+    document.getElementById('char-count').innerText = '0';
+};
+
+const closeFeedbackModal = () => {
+    const modal = document.getElementById('feedback-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+};
+
+document.getElementById('close-feedback-modal').addEventListener('click', closeFeedbackModal);
+document.getElementById('cancel-feedback').addEventListener('click', closeFeedbackModal);
+
+// Contador de caracteres dinámico
+document.getElementById('feedback-message').addEventListener('input', function() {
+    document.getElementById('char-count').innerText = this.value.length;
+});
+
+// Enviar formulario
+document.getElementById('feedback-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalContent = btn.innerHTML;
+    
+    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Enviando...`;
+    btn.disabled = true;
+    lucide.createIcons();
+
+    const nameInput = document.getElementById('feedback-name').value.trim();
+    const name = nameInput !== '' ? nameInput : 'Anónimo';
+    const message = document.getElementById('feedback-message').value.trim();
+
+    try {
+        // Llama a la API de Electron (La configuraremos en el siguiente paso)
+        await window.api.sendFeedback({ name, message });
+        
+        closeFeedbackModal();
+        showToast();
+    } catch (error) {
+        alert("Hubo un error al enviar tu mensaje. Intenta de nuevo.");
+    } finally {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+        lucide.createIcons();
+    }
+});
+
+// Mostrar tarjeta flotante (Toast)
+function showToast() {
+    const toast = document.getElementById('toast-notification');
+    
+    // Mostrar
+    toast.classList.remove('opacity-0', 'translate-y-10');
+    toast.classList.add('opacity-100', 'translate-y-0');
+
+    // Ocultar después de 5 segundos
+    setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-10');
+    }, 5000);
+}
