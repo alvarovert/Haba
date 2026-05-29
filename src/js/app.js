@@ -176,7 +176,7 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
         document.getElementById('amount').focus(); // Pone el cursor en el monto automáticamente
 
         // --- FEEDBACK VISUAL DEL BOTON---
-        btn.innerText = "¡Gasto Guardado! ✅";
+        btn.innerText = "Gasto Guardado";
         btn.classList.replace('bg-indigo-600', 'bg-green-600');
         btn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-700');
 
@@ -185,7 +185,7 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
             btn.classList.replace('bg-green-600', 'bg-indigo-600');
             btn.classList.replace('hover:bg-green-700', 'hover:bg-indigo-700');
             btn.disabled = false;
-        }, 1500);
+        }, 700);
 
     } catch (error) {
         console.error(error);
