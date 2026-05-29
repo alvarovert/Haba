@@ -359,7 +359,7 @@ document.getElementById('feedback-form').addEventListener('submit', async (e) =>
     lucide.createIcons();
 
     const nameInput = document.getElementById('feedback-name').value.trim();
-    const name = nameInput !== '' ? nameInput : 'Anónimo';
+    const name = nameInput !== '' ? nameInput : 'Usuario Haba';
     const message = document.getElementById('feedback-message').value.trim();
 
     try {
