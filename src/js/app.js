@@ -149,7 +149,10 @@ window.deleteCategory = async (categoryName) => {
 document.getElementById('expense-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = "Guardar Gasto";
+    
     btn.innerText = "Guardando...";
+    btn.disabled = true;
 
     const newExpense = {
         amount: document.getElementById('amount').value,
@@ -158,16 +161,38 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
         description: document.getElementById('description').value
     };
 
-    const saved = await window.api.addExpense(newExpense);
-    appData.expenses.push(saved);
-    
-    e.target.reset();
-    applyFilter(); // Actualiza dashboard
-    
-    setTimeout(() => {
-        btn.innerText = "Guardar Gasto";
-        switchTab('dashboard'); // Transición suave al dashboard
-    }, 400);
+    try {
+        const saved = await window.api.addExpense(newExpense);
+        appData.expenses.push(saved);
+        
+        // --- ACTUALIZACIÓN EN SEGUNDO PLANO ---
+        // Esto actualiza las gráficas y estadísticas del Dashboard
+        applyFilter(); 
+        // Esto actualiza la lista de la pestaña Historial
+        renderHistoryTable(); 
+
+        // --- PREPARAR PARA EL SIGUIENTE REGISTRO ---
+        e.target.reset(); // Limpia los campos
+        document.getElementById('amount').focus(); // Pone el cursor en el monto automáticamente
+
+        // --- FEEDBACK VISUAL DEL BOTON---
+        btn.innerText = "¡Gasto Guardado! ✅";
+        btn.classList.replace('bg-indigo-600', 'bg-green-600');
+        btn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-700');
+
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.replace('bg-green-600', 'bg-indigo-600');
+            btn.classList.replace('hover:bg-green-700', 'hover:bg-indigo-700');
+            btn.disabled = false;
+        }, 1500);
+
+    } catch (error) {
+        console.error(error);
+        alert("Hubo un error al guardar.");
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
 });
 
 // Exportar
@@ -228,6 +253,7 @@ window.deleteExpense = async (id) => {
         appData.expenses = await window.api.deleteExpense(id);
         applyFilter(); 
         renderHistoryTable(); 
+        updateCategorySelect(); 
     }
 };
 
