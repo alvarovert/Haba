@@ -87,33 +87,6 @@ function updateCategorySelect() {
     select.innerHTML = appData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
-function updateSourceSelect() {
-    const select = document.getElementById('income-source');
-    if(select) {
-        select.innerHTML = appData.incomeSources.map(s => `<option value="${s}">${s}</option>`).join('');
-    }
-}
-
-// 3. NUEVO: Lógica para gestionar Orígenes de Ingresos
-document.getElementById('btn-manage-sources').addEventListener('click', async () => {
-    const action = confirm("¿Deseas agregar un nuevo origen? (Aceptar para Agregar, Cancelar para Eliminar)");
-    
-    if (action) {
-        const newSource = prompt("Nombre del nuevo origen de ingresos:");
-        if (newSource && newSource.trim() !== "") {
-            appData.incomeSources = await window.api.addIncomeSource(newSource.trim());
-            updateSourceSelect();
-            alert("Origen agregado");
-        }
-    } else {
-        const sourceToDelete = prompt("Escribe el nombre exacto del origen que deseas eliminar:\n" + appData.incomeSources.join(", "));
-        if (sourceToDelete && appData.incomeSources.includes(sourceToDelete)) {
-            appData.incomeSources = await window.api.deleteIncomeSource(sourceToDelete);
-            updateSourceSelect();
-            alert("Origen eliminado");
-        }
-    }
-});
 
 // 4. ACTUALIZACIÓN: Formulario de Ingresos (Mejorado)
 document.getElementById('income-form').addEventListener('submit', async (e) => {
@@ -271,6 +244,70 @@ async function exportData() {
     const res = await window.api.exportCsv();
     if (res.success) alert('¡Datos exportados con éxito!');
     else if(res.msg) alert(res.msg);
+}
+
+// ====== GESTIÓN DE ORÍGENES (MODAL) ======
+const sourceModal = document.getElementById('source-modal');
+const btnManageSources = document.getElementById('btn-manage-sources');
+const btnCloseSourceModal = document.getElementById('close-source-modal');
+const btnAddSource = document.getElementById('btn-add-source');
+const inputNewSource = document.getElementById('new-source-input');
+
+// Abrir modal de orígenes
+btnManageSources.addEventListener('click', () => {
+    renderSourceList();
+    sourceModal.classList.remove('hidden');
+    sourceModal.classList.add('flex');
+});
+
+// Cerrar modal de orígenes
+btnCloseSourceModal.addEventListener('click', () => {
+    sourceModal.classList.add('hidden');
+    sourceModal.classList.remove('flex');
+    updateSourceSelect();
+});
+
+// Renderizar la lista dentro del modal
+function renderSourceList() {
+    const list = document.getElementById('source-list');
+    list.innerHTML = appData.incomeSources.map(s => `
+        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg group">
+            <span class="text-sm font-medium text-gray-700">${s}</span>
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                <button onclick="deleteSource('${s}')" class="text-red-500 hover:text-red-700">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    lucide.createIcons();
+}
+
+// Agregar nuevo origen
+btnAddSource.addEventListener('click', async () => {
+    const newSource = inputNewSource.value.trim();
+    if (newSource) {
+        appData.incomeSources = await window.api.addIncomeSource(newSource);
+        inputNewSource.value = '';
+        renderSourceList();
+        updateSourceSelect();
+    }
+});
+
+// Eliminar origen
+window.deleteSource = async (sourceName) => {
+    if (confirm(`¿Eliminar el origen "${sourceName}"?`)) {
+        appData.incomeSources = await window.api.deleteIncomeSource(sourceName);
+        renderSourceList();
+        updateSourceSelect();
+    }
+};
+
+function updateSourceSelect() {
+    const select = document.getElementById('income-source');
+    if(select) {
+        select.innerHTML = appData.incomeSources.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
 }
 
 // ====== HISTORIAL (TABLA) ======
