@@ -1,11 +1,13 @@
 lucide.createIcons();
 
-let appData = { expenses: [], categories: [] };
+// 1. CORRECCIÓN: Una sola declaración
+let appData = { expenses: [], categories: [], incomes: [], incomeSources: [] };
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', async () => {
     appData = await window.api.getData();
     updateCategorySelect();
+    updateSourceSelect(); 
     applyFilter();
     renderHistoryTable(); 
 });
@@ -29,11 +31,12 @@ function switchTab(tabId) {
 // Filtros y Renderizado
 document.getElementById('time-filter').addEventListener('change', applyFilter);
 
+// 2. CORRECCIÓN: applyFilter debe pasar los gastos filtrados a renderCharts
 function applyFilter() {
     const filter = document.getElementById('time-filter').value;
     const now = new Date();
     
-    let filtered = appData.expenses.filter(e => {
+    let filteredExpenses = appData.expenses.filter(e => {
         const date = new Date(e.timestamp);
         if (filter === 'today') return date.toDateString() === now.toDateString();
         if (filter === 'month') return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
@@ -45,8 +48,9 @@ function applyFilter() {
         return true;
     });
 
-    updateDashboardStats(filtered);
-    renderCharts(filtered);
+    updateDashboardStats(filteredExpenses);
+    // renderCharts ahora recibe los gastos filtrados y usará appData.incomes internamente
+    renderCharts(filteredExpenses); 
 }
 
 function updateDashboardStats(expenses) {
@@ -82,6 +86,73 @@ function updateCategorySelect() {
     const select = document.getElementById('category');
     select.innerHTML = appData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
 }
+
+function updateSourceSelect() {
+    const select = document.getElementById('income-source');
+    if(select) {
+        select.innerHTML = appData.incomeSources.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+}
+
+// 3. NUEVO: Lógica para gestionar Orígenes de Ingresos
+document.getElementById('btn-manage-sources').addEventListener('click', async () => {
+    const action = confirm("¿Deseas agregar un nuevo origen? (Aceptar para Agregar, Cancelar para Eliminar)");
+    
+    if (action) {
+        const newSource = prompt("Nombre del nuevo origen de ingresos:");
+        if (newSource && newSource.trim() !== "") {
+            appData.incomeSources = await window.api.addIncomeSource(newSource.trim());
+            updateSourceSelect();
+            alert("Origen agregado");
+        }
+    } else {
+        const sourceToDelete = prompt("Escribe el nombre exacto del origen que deseas eliminar:\n" + appData.incomeSources.join(", "));
+        if (sourceToDelete && appData.incomeSources.includes(sourceToDelete)) {
+            appData.incomeSources = await window.api.deleteIncomeSource(sourceToDelete);
+            updateSourceSelect();
+            alert("Origen eliminado");
+        }
+    }
+});
+
+// 4. ACTUALIZACIÓN: Formulario de Ingresos (Mejorado)
+document.getElementById('income-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = "Guardar Ingreso";
+    
+    btn.innerText = "Guardando...";
+    btn.disabled = true;
+
+    const newIncome = {
+        amount: document.getElementById('income-amount').value,
+        source: document.getElementById('income-source').value,
+        description: document.getElementById('income-description').value
+    };
+
+    try {
+        const saved = await window.api.addIncome(newIncome);
+        appData.incomes.push(saved);
+        
+        applyFilter(); 
+        renderHistoryTable(); 
+        e.target.reset();
+        
+        btn.innerText = "Ingreso Guardado";
+        btn.classList.replace('bg-green-600', 'bg-emerald-600');
+
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.replace('bg-emerald-600', 'bg-green-600');
+            btn.disabled = false;
+        }, 1000);
+    } catch (error) {
+        console.error(error);
+        alert("Error al guardar ingreso");
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+});
 
 // ====== GESTIÓN DE CATEGORÍAS (MODAL) ======
 
@@ -203,39 +274,48 @@ async function exportData() {
 }
 
 // ====== HISTORIAL (TABLA) ======
+// Modificar renderHistoryTable para mezclar gastos e ingresos
 function renderHistoryTable() {
     const tbody = document.getElementById('history-table-body');
     
-    // Ordenar gastos del más reciente al más antiguo
-    const sortedExpenses = [...appData.expenses].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    // Combinar ambos arrays etiquetándolos
+    const combined = [
+        ...appData.expenses.map(e => ({...e, type: 'expense'})),
+        ...appData.incomes.map(i => ({...i, type: 'income'}))
+    ];
 
-    if (sortedExpenses.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400 text-sm">No hay gastos registrados aún.</td></tr>`;
+    const sorted = combined.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    if (sorted.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400 text-sm">No hay registros aún.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = sortedExpenses.map(e => {
-        const dateObj = new Date(e.timestamp);
+    tbody.innerHTML = sorted.map(item => {
+        const dateObj = new Date(item.timestamp);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
         const timeStr = dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const isIncome = item.type === 'income';
 
         return `
             <tr class="hover:bg-gray-50/80 transition-colors group">
-                <td class="py-4 px-6 text-sm text-gray-500 whitespace-nowrap">${dateStr} <span class="text-gray-400 text-xs ml-1">${timeStr}</span></td>
-                <td class="py-4 px-6 text-sm text-gray-900 font-medium">${e.description}</td>
+                <td class="py-4 px-6 text-sm text-gray-500 whitespace-nowrap flex items-center gap-2">
+                    ${isIncome ? '<span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>' : ''}
+                    ${dateStr} <span class="text-gray-400 text-xs ml-1">${timeStr}</span>
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-900 font-medium">${item.description}</td>
                 <td class="py-4 px-6 text-sm">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        ${e.category}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${isIncome ? 'bg-green-50 text-green-700 border-green-100' : 'bg-indigo-50 text-indigo-700 border-indigo-100'} border">
+                        ${isIncome ? item.source : item.category}
                     </span>
                 </td>
-                <td class="py-4 px-6 text-sm text-gray-500">${e.source}</td>
-                <td class="py-4 px-6 text-sm text-gray-900 font-semibold text-right">S/${parseFloat(e.amount).toFixed(2)}</td>
+                <td class="py-4 px-6 text-sm text-gray-500">${isIncome ? 'Ingreso Directo' : item.source}</td>
+                <td class="py-4 px-6 text-sm font-semibold text-right ${isIncome ? 'text-green-600' : 'text-gray-900'}">
+                    ${isIncome ? '+' : ''}S/${parseFloat(item.amount).toFixed(2)}
+                </td>
                 <td class="py-4 px-4 text-sm text-center">
                     <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="openEditModal('${e.id}')" class="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
-                            <i data-lucide="pencil" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="deleteExpense('${e.id}')" class="text-gray-400 hover:text-red-500 transition-colors" title="Eliminar">
+                        <button onclick="${isIncome ? `deleteIncome('${item.id}')` : `deleteExpense('${item.id}')`}" class="text-gray-400 hover:text-red-500 transition-colors">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -243,8 +323,7 @@ function renderHistoryTable() {
             </tr>
         `;
     }).join('');
-    
-    lucide.createIcons(); // Vuelve a cargar los iconos en la tabla
+    lucide.createIcons();
 }
 // ====== EDITAR Y ELIMINAR GASTOS ======
 
@@ -256,6 +335,14 @@ window.deleteExpense = async (id) => {
         updateCategorySelect(); 
     }
 };
+// Función para borrar ingresos
+window.deleteIncome = async (id) => {
+    if (confirm('¿Eliminar este ingreso?')) {
+        appData.incomes = await window.api.deleteIncome(id);
+        applyFilter();
+        renderHistoryTable();
+    }
+}
 
 window.openEditModal = (id) => {
     const editModal = document.getElementById('edit-expense-modal');
@@ -320,7 +407,7 @@ document.getElementById('edit-expense-form').addEventListener('submit', async (e
     editModal.classList.remove('flex');
     btn.innerText = originalText;
 });
-
+// Manejo del formulario de Ingresos
 // ====== SECCIÓN: TU OPINIÓN (FEEDBACK) ======
 
 window.openFeedbackModal = () => {

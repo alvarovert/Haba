@@ -32,6 +32,9 @@
                 <button onclick="switchTab('add')" id="tab-add" class="nav-btn flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-500 hover:bg-gray-50">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i> Nuevo Gasto
                 </button>
+                <button onclick="switchTab('income')" id="tab-income" class="nav-btn flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-500 hover:bg-gray-50">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-green-500"></i> Ingresos
+                </button>
                 <!-- BOTÓN DE HISTORIAL -->
                 <button onclick="switchTab('history')" id="tab-history" class="nav-btn flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-500 hover:bg-gray-50">
                     <i data-lucide="list-video" class="w-4 h-4"></i> Historial
@@ -89,12 +92,20 @@
                         <h4 class="text-sm font-medium text-gray-500 mb-4">Gasto por Día</h4>
                         <canvas id="barChart"></canvas>
                     </div>
+                    <!-- NUEVO CHART DE PROGRESO -->
+                    <div class="col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-gray-100 h-40 mt-[-1rem]">
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Balance Mensual (Ingresos vs Gastos)</h4>
+                        <div class="h-16">
+                            <canvas id="progressChart"></canvas>
+                        </div>
+                    </div>
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-80 flex flex-col items-center">
                         <h4 class="text-sm font-medium text-gray-500 mb-4 w-full text-left">Gasto por Categoría</h4>
                         <div class="relative w-full h-full flex justify-center">
                             <canvas id="doughnutChart"></canvas>
                         </div>
                     </div>
+
                 </div>
             </div>
 
@@ -136,6 +147,38 @@
 
                     <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition-colors shadow-sm mt-4">
                         Guardar Gasto
+                    </button>
+                </form>
+            </div>
+        </div>
+                <!-- ADD INCOME VIEW -->
+        <div id="view-income" class="view hidden max-w-xl mx-auto pt-10 no-drag">
+            <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-semibold mb-6">Registrar Ingreso</h2>
+                <form id="income-form" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Monto</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-3 text-gray-400">S/</span>
+                            <input type="number" step="0.01" id="income-amount" required class="w-full bg-gray-50 border-none rounded-xl pl-8 pr-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 transition-all outline-none text-lg" placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Origen</label>
+                        <select id="income-source" required class="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 transition-all outline-none">
+                            <!-- Llenado por JS -->
+                        </select>
+                        <button type="button" id="btn-manage-sources" class="text-xs text-green-600 mt-2 hover:underline font-medium">Gestionar orígenes</button>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                        <input type="text" id="income-description" required class="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-green-500 transition-all outline-none" placeholder="Ej. Pago de planilla">
+                    </div>
+
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-xl transition-colors shadow-sm mt-4">
+                        Guardar Ingreso
                     </button>
                 </form>
             </div>
