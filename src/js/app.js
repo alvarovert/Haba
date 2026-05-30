@@ -352,6 +352,11 @@ function renderHistoryTable() {
                 </td>
                 <td class="py-4 px-4 text-sm text-center">
                     <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+
+                        <button onclick="${isIncome ? `openEditModal('${item.id}')` : `openEditModal('${item.id}')`}" class="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                    
                         <button onclick="${isIncome ? `deleteIncome('${item.id}')` : `deleteExpense('${item.id}')`}" class="text-gray-400 hover:text-red-500 transition-colors">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
