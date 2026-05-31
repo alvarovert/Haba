@@ -1,11 +1,13 @@
 lucide.createIcons();
 
-let appData = { expenses: [], categories: [] };
+// 1. CORRECCIÓN: Una sola declaración
+let appData = { expenses: [], categories: [], incomes: [], incomeSources: [] };
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', async () => {
     appData = await window.api.getData();
     updateCategorySelect();
+    updateSourceSelect(); 
     applyFilter();
     renderHistoryTable(); 
 });
@@ -29,11 +31,12 @@ function switchTab(tabId) {
 // Filtros y Renderizado
 document.getElementById('time-filter').addEventListener('change', applyFilter);
 
+// 2. CORRECCIÓN: applyFilter debe pasar los gastos filtrados a renderCharts
 function applyFilter() {
     const filter = document.getElementById('time-filter').value;
     const now = new Date();
     
-    let filtered = appData.expenses.filter(e => {
+    let filteredExpenses = appData.expenses.filter(e => {
         const date = new Date(e.timestamp);
         if (filter === 'today') return date.toDateString() === now.toDateString();
         if (filter === 'month') return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
@@ -45,8 +48,9 @@ function applyFilter() {
         return true;
     });
 
-    updateDashboardStats(filtered);
-    renderCharts(filtered);
+    updateDashboardStats(filteredExpenses);
+    // renderCharts ahora recibe los gastos filtrados y usará appData.incomes internamente
+    renderCharts(filteredExpenses); 
 }
 
 function updateDashboardStats(expenses) {
@@ -82,6 +86,46 @@ function updateCategorySelect() {
     const select = document.getElementById('category');
     select.innerHTML = appData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
 }
+
+
+// 4. ACTUALIZACIÓN: Formulario de Ingresos (Mejorado)
+document.getElementById('income-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = "Guardar Ingreso";
+    
+    btn.innerText = "Guardando...";
+    btn.disabled = true;
+
+    const newIncome = {
+        amount: document.getElementById('income-amount').value,
+        source: document.getElementById('income-source').value,
+        description: document.getElementById('income-description').value
+    };
+
+    try {
+        const saved = await window.api.addIncome(newIncome);
+        appData.incomes.push(saved);
+        
+        applyFilter(); 
+        renderHistoryTable(); 
+        e.target.reset();
+        
+        btn.innerText = "Ingreso Guardado";
+        btn.classList.replace('bg-green-600', 'bg-emerald-600');
+
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.replace('bg-emerald-600', 'bg-green-600');
+            btn.disabled = false;
+        }, 1000);
+    } catch (error) {
+        console.error(error);
+        alert("Error al guardar ingreso");
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+});
 
 // ====== GESTIÓN DE CATEGORÍAS (MODAL) ======
 
@@ -202,40 +246,118 @@ async function exportData() {
     else if(res.msg) alert(res.msg);
 }
 
+// ====== GESTIÓN DE ORÍGENES (MODAL) ======
+const sourceModal = document.getElementById('source-modal');
+const btnManageSources = document.getElementById('btn-manage-sources');
+const btnCloseSourceModal = document.getElementById('close-source-modal');
+const btnAddSource = document.getElementById('btn-add-source');
+const inputNewSource = document.getElementById('new-source-input');
+
+// Abrir modal de orígenes
+btnManageSources.addEventListener('click', () => {
+    renderSourceList();
+    sourceModal.classList.remove('hidden');
+    sourceModal.classList.add('flex');
+});
+
+// Cerrar modal de orígenes
+btnCloseSourceModal.addEventListener('click', () => {
+    sourceModal.classList.add('hidden');
+    sourceModal.classList.remove('flex');
+    updateSourceSelect();
+});
+
+// Renderizar la lista dentro del modal
+function renderSourceList() {
+    const list = document.getElementById('source-list');
+    list.innerHTML = appData.incomeSources.map(s => `
+        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg group">
+            <span class="text-sm font-medium text-gray-700">${s}</span>
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                <button onclick="deleteSource('${s}')" class="text-red-500 hover:text-red-700">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+    lucide.createIcons();
+}
+
+// Agregar nuevo origen
+btnAddSource.addEventListener('click', async () => {
+    const newSource = inputNewSource.value.trim();
+    if (newSource) {
+        appData.incomeSources = await window.api.addIncomeSource(newSource);
+        inputNewSource.value = '';
+        renderSourceList();
+        updateSourceSelect();
+    }
+});
+
+// Eliminar origen
+window.deleteSource = async (sourceName) => {
+    if (confirm(`¿Eliminar el origen "${sourceName}"?`)) {
+        appData.incomeSources = await window.api.deleteIncomeSource(sourceName);
+        renderSourceList();
+        updateSourceSelect();
+    }
+};
+
+function updateSourceSelect() {
+    const select = document.getElementById('income-source');
+    if(select) {
+        select.innerHTML = appData.incomeSources.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+}
+
 // ====== HISTORIAL (TABLA) ======
+// Modificar renderHistoryTable para mezclar gastos e ingresos
 function renderHistoryTable() {
     const tbody = document.getElementById('history-table-body');
     
-    // Ordenar gastos del más reciente al más antiguo
-    const sortedExpenses = [...appData.expenses].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    // Combinar ambos arrays etiquetándolos
+    const combined = [
+        ...appData.expenses.map(e => ({...e, type: 'expense'})),
+        ...appData.incomes.map(i => ({...i, type: 'income'}))
+    ];
 
-    if (sortedExpenses.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400 text-sm">No hay gastos registrados aún.</td></tr>`;
+    const sorted = combined.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    if (sorted.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-gray-400 text-sm">No hay registros aún.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = sortedExpenses.map(e => {
-        const dateObj = new Date(e.timestamp);
+    tbody.innerHTML = sorted.map(item => {
+        const dateObj = new Date(item.timestamp);
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
         const timeStr = dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        const isIncome = item.type === 'income';
 
         return `
             <tr class="hover:bg-gray-50/80 transition-colors group">
-                <td class="py-4 px-6 text-sm text-gray-500 whitespace-nowrap">${dateStr} <span class="text-gray-400 text-xs ml-1">${timeStr}</span></td>
-                <td class="py-4 px-6 text-sm text-gray-900 font-medium">${e.description}</td>
+                <td class="py-4 px-6 text-sm text-gray-500 whitespace-nowrap flex items-center gap-2">
+                    ${isIncome ? '<span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>' : ''}
+                    ${dateStr} <span class="text-gray-400 text-xs ml-1">${timeStr}</span>
+                </td>
+                <td class="py-4 px-6 text-sm text-gray-900 font-medium">${item.description}</td>
                 <td class="py-4 px-6 text-sm">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                        ${e.category}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${isIncome ? 'bg-green-50 text-green-700 border-green-100' : 'bg-indigo-50 text-indigo-700 border-indigo-100'} border">
+                        ${isIncome ? item.source : item.category}
                     </span>
                 </td>
-                <td class="py-4 px-6 text-sm text-gray-500">${e.source}</td>
-                <td class="py-4 px-6 text-sm text-gray-900 font-semibold text-right">S/${parseFloat(e.amount).toFixed(2)}</td>
+                <td class="py-4 px-6 text-sm text-gray-500">${isIncome ? 'Ingreso Directo' : item.source}</td>
+                <td class="py-4 px-6 text-sm font-semibold text-right ${isIncome ? 'text-green-600' : 'text-gray-900'}">
+                    ${isIncome ? '+' : ''}S/${parseFloat(item.amount).toFixed(2)}
+                </td>
                 <td class="py-4 px-4 text-sm text-center">
                     <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="openEditModal('${e.id}')" class="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
+
+                        <button onclick="openEditModal('${item.id}', '${item.type}')" class="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
                             <i data-lucide="pencil" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="deleteExpense('${e.id}')" class="text-gray-400 hover:text-red-500 transition-colors" title="Eliminar">
+                    
+                        <button onclick="${isIncome ? `deleteIncome('${item.id}')` : `deleteExpense('${item.id}')`}" class="text-gray-400 hover:text-red-500 transition-colors">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -243,8 +365,7 @@ function renderHistoryTable() {
             </tr>
         `;
     }).join('');
-    
-    lucide.createIcons(); // Vuelve a cargar los iconos en la tabla
+    lucide.createIcons();
 }
 // ====== EDITAR Y ELIMINAR GASTOS ======
 
@@ -256,32 +377,59 @@ window.deleteExpense = async (id) => {
         updateCategorySelect(); 
     }
 };
+// Función para borrar ingresos
+window.deleteIncome = async (id) => {
+    if (confirm('¿Eliminar este ingreso?')) {
+        appData.incomes = await window.api.deleteIncome(id);
+        applyFilter();
+        renderHistoryTable();
+    }
+}
 
-window.openEditModal = (id) => {
+window.openEditModal = (id, type) => {
     const editModal = document.getElementById('edit-expense-modal');
+    const title = editModal.querySelector('h3');
+    const categoryLabel = editModal.querySelector('label[for="edit-category"]');
     
-    // Buscar el gasto asegurándonos de que ambos sean String
-    const expense = appData.expenses.find(e => String(e.id) === String(id));
-    if (!expense) return;
+    // Buscar el objeto en el array correcto
+    const item = type === 'income' 
+        ? appData.incomes.find(i => String(i.id) === String(id))
+        : appData.expenses.find(e => String(e.id) === String(id));
 
-    // Llenar categorías en el select del modal
+    if (!item) return;
+
+    // Configurar el modal según el tipo
+    title.innerText = type === 'income' ? 'Editar Ingreso' : 'Editar Gasto';
+    document.getElementById('edit-id').dataset.type = type; // Guardamos el tipo en un atributo data
+
     const selectCat = document.getElementById('edit-category');
-    selectCat.innerHTML = appData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    if (type === 'income') {
+        // Si es ingreso, mostramos orígenes en lugar de categorías
+        categoryLabel.innerText = "Origen";
+        selectCat.innerHTML = appData.incomeSources.map(s => `<option value="${s}">${s}</option>`).join('');
+        document.getElementById('edit-category').value = item.source;
+        // Ocultar fuente de pago ya que ingresos no suelen tenerla en tu esquema
+        document.getElementById('edit-source').parentElement.style.display = 'none';
+    } else {
+        // Si es gasto, comportamiento normal
+        categoryLabel.innerText = "Categoría";
+        selectCat.innerHTML = appData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('edit-category').value = item.category;
+        document.getElementById('edit-source').parentElement.style.display = 'block';
+        document.getElementById('edit-source').value = item.source;
+    }
 
-    // Ajustar zona horaria para el input datetime-local
-    const date = new Date(expense.timestamp);
+    // Ajustar fecha
+    const date = new Date(item.timestamp);
     const tzoffset = date.getTimezoneOffset() * 60000;
     const localISOTime = new Date(date - tzoffset).toISOString().slice(0, 16);
 
-    // Llenar valores
-    document.getElementById('edit-id').value = expense.id;
-    document.getElementById('edit-amount').value = expense.amount;
+    // Llenar valores comunes
+    document.getElementById('edit-id').value = item.id;
+    document.getElementById('edit-amount').value = item.amount;
     document.getElementById('edit-date').value = localISOTime;
-    document.getElementById('edit-category').value = expense.category;
-    document.getElementById('edit-source').value = expense.source;
-    document.getElementById('edit-description').value = expense.description;
+    document.getElementById('edit-description').value = item.description;
 
-    // Mostrar modal
     editModal.classList.remove('hidden');
     editModal.classList.add('flex');
 };
@@ -292,35 +440,46 @@ document.getElementById('close-edit-modal').addEventListener('click', () => {
     editModal.classList.remove('flex');
 });
 
+
 document.getElementById('edit-expense-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerText;
+    const type = document.getElementById('edit-id').dataset.type;
+    const id = document.getElementById('edit-id').value;
+    
     btn.innerText = "Guardando...";
 
     const dateInputStr = document.getElementById('edit-date').value;
     const updatedTimestamp = new Date(dateInputStr).toISOString();
 
-    const updatedExpense = {
-        id: document.getElementById('edit-id').value,
-        amount: document.getElementById('edit-amount').value,
-        timestamp: updatedTimestamp,
-        category: document.getElementById('edit-category').value,
-        source: document.getElementById('edit-source').value,
-        description: document.getElementById('edit-description').value
-    };
-
-    appData.expenses = await window.api.editExpense(updatedExpense);
+    if (type === 'income') {
+        const updatedIncome = {
+            id: id,
+            amount: document.getElementById('edit-amount').value,
+            timestamp: updatedTimestamp,
+            source: document.getElementById('edit-category').value, // En ingresos usamos el select de categoría para el source
+            description: document.getElementById('edit-description').value
+        };
+        appData.incomes = await window.api.editIncome(updatedIncome);
+    } else {
+        const updatedExpense = {
+            id: id,
+            amount: document.getElementById('edit-amount').value,
+            timestamp: updatedTimestamp,
+            category: document.getElementById('edit-category').value,
+            source: document.getElementById('edit-source').value,
+            description: document.getElementById('edit-description').value
+        };
+        appData.expenses = await window.api.editExpense(updatedExpense);
+    }
     
     applyFilter();
     renderHistoryTable();
     
-    const editModal = document.getElementById('edit-expense-modal');
-    editModal.classList.add('hidden');
-    editModal.classList.remove('flex');
-    btn.innerText = originalText;
+    document.getElementById('edit-expense-modal').classList.add('hidden');
+    document.getElementById('edit-expense-modal').classList.remove('flex');
+    btn.innerText = "Guardar Cambios";
 });
-
 // ====== SECCIÓN: TU OPINIÓN (FEEDBACK) ======
 
 window.openFeedbackModal = () => {

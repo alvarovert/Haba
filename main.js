@@ -12,6 +12,8 @@ if (!store.has('expenses')) store.set('expenses', []);
 if (!store.has('categories')) {
     store.set('categories', ['Comida', 'Movilidad', 'Entretenimiento', 'Servicios', 'Otros']);
 }
+if (!store.has('incomes')) store.set('incomes', []);
+if (!store.has('incomeSources')) store.set('incomeSources', ['Trabajo']);
 
 let mainWindow;
 
@@ -120,7 +122,9 @@ app.on('window-all-closed', () => {
 ipcMain.handle('get-data', () => {
     return {
         expenses: store.get('expenses'),
-        categories: store.get('categories')
+        categories: store.get('categories'),
+        incomes: store.get('incomes'),
+        incomeSources: store.get('incomeSources')
     };
 });
 
@@ -134,6 +138,43 @@ ipcMain.handle('add-expense', (event, expense) => {
     expenses.push(newExpense);
     store.set('expenses', expenses);
     return newExpense;
+});
+
+// Manejo de Ingresos
+ipcMain.handle('add-income', (event, income) => {
+    const incomes = store.get('incomes');
+    const newIncome = {
+        ...income,
+        id: 'inc_' + Date.now().toString(),
+        timestamp: new Date().toISOString()
+    };
+    incomes.push(newIncome);
+    store.set('incomes', incomes);
+    return newIncome;
+});
+
+ipcMain.handle('delete-income', (event, id) => {
+    let incomes = store.get('incomes');
+    incomes = incomes.filter(i => i.id !== id);
+    store.set('incomes', incomes);
+    return incomes;
+});
+
+// Manejo de Orígenes de Ingreso
+ipcMain.handle('add-income-source', (event, source) => {
+    const sources = store.get('incomeSources');
+    if (!sources.includes(source)) {
+        sources.push(source);
+        store.set('incomeSources', sources);
+    }
+    return sources;
+});
+
+ipcMain.handle('delete-income-source', (event, sourceName) => {
+    let sources = store.get('incomeSources');
+    sources = sources.filter(s => s !== sourceName);
+    store.set('incomeSources', sources);
+    return sources;
 });
 
 ipcMain.handle('add-category', (event, category) => {
@@ -186,6 +227,16 @@ ipcMain.handle('edit-expense', (event, updatedExpense) => {
         store.set('expenses', expenses);
     }
     return expenses;
+});
+
+ipcMain.handle('edit-income', (event, updatedIncome) => {
+    let incomes = store.get('incomes');
+    const index = incomes.findIndex(i => i.id === updatedIncome.id);
+    if (index !== -1) {
+        incomes[index] = { ...incomes[index], ...updatedIncome };
+        store.set('incomes', incomes);
+    }
+    return incomes;
 });
 
 ipcMain.handle('export-csv', async () => {
