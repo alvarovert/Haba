@@ -353,7 +353,7 @@ function renderHistoryTable() {
                 <td class="py-4 px-4 text-sm text-center">
                     <div class="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
 
-                        <button onclick="${isIncome ? `openEditModal('${item.id}')` : `openEditModal('${item.id}')`}" class="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
+                        <button onclick="openEditModal('${item.id}', '${item.type}')" class="text-gray-400 hover:text-indigo-600 transition-colors" title="Editar">
                             <i data-lucide="pencil" class="w-4 h-4"></i>
                         </button>
                     
@@ -386,31 +386,50 @@ window.deleteIncome = async (id) => {
     }
 }
 
-window.openEditModal = (id) => {
+window.openEditModal = (id, type) => {
     const editModal = document.getElementById('edit-expense-modal');
+    const title = editModal.querySelector('h3');
+    const categoryLabel = editModal.querySelector('label[for="edit-category"]');
     
-    // Buscar el gasto asegurándonos de que ambos sean String
-    const expense = appData.expenses.find(e => String(e.id) === String(id));
-    if (!expense) return;
+    // Buscar el objeto en el array correcto
+    const item = type === 'income' 
+        ? appData.incomes.find(i => String(i.id) === String(id))
+        : appData.expenses.find(e => String(e.id) === String(id));
 
-    // Llenar categorías en el select del modal
+    if (!item) return;
+
+    // Configurar el modal según el tipo
+    title.innerText = type === 'income' ? 'Editar Ingreso' : 'Editar Gasto';
+    document.getElementById('edit-id').dataset.type = type; // Guardamos el tipo en un atributo data
+
     const selectCat = document.getElementById('edit-category');
-    selectCat.innerHTML = appData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    if (type === 'income') {
+        // Si es ingreso, mostramos orígenes en lugar de categorías
+        categoryLabel.innerText = "Origen";
+        selectCat.innerHTML = appData.incomeSources.map(s => `<option value="${s}">${s}</option>`).join('');
+        document.getElementById('edit-category').value = item.source;
+        // Ocultar fuente de pago ya que ingresos no suelen tenerla en tu esquema
+        document.getElementById('edit-source').parentElement.style.display = 'none';
+    } else {
+        // Si es gasto, comportamiento normal
+        categoryLabel.innerText = "Categoría";
+        selectCat.innerHTML = appData.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        document.getElementById('edit-category').value = item.category;
+        document.getElementById('edit-source').parentElement.style.display = 'block';
+        document.getElementById('edit-source').value = item.source;
+    }
 
-    // Ajustar zona horaria para el input datetime-local
-    const date = new Date(expense.timestamp);
+    // Ajustar fecha
+    const date = new Date(item.timestamp);
     const tzoffset = date.getTimezoneOffset() * 60000;
     const localISOTime = new Date(date - tzoffset).toISOString().slice(0, 16);
 
-    // Llenar valores
-    document.getElementById('edit-id').value = expense.id;
-    document.getElementById('edit-amount').value = expense.amount;
+    // Llenar valores comunes
+    document.getElementById('edit-id').value = item.id;
+    document.getElementById('edit-amount').value = item.amount;
     document.getElementById('edit-date').value = localISOTime;
-    document.getElementById('edit-category').value = expense.category;
-    document.getElementById('edit-source').value = expense.source;
-    document.getElementById('edit-description').value = expense.description;
+    document.getElementById('edit-description').value = item.description;
 
-    // Mostrar modal
     editModal.classList.remove('hidden');
     editModal.classList.add('flex');
 };
@@ -421,35 +440,46 @@ document.getElementById('close-edit-modal').addEventListener('click', () => {
     editModal.classList.remove('flex');
 });
 
+
 document.getElementById('edit-expense-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
-    const originalText = btn.innerText;
+    const type = document.getElementById('edit-id').dataset.type;
+    const id = document.getElementById('edit-id').value;
+    
     btn.innerText = "Guardando...";
 
     const dateInputStr = document.getElementById('edit-date').value;
     const updatedTimestamp = new Date(dateInputStr).toISOString();
 
-    const updatedExpense = {
-        id: document.getElementById('edit-id').value,
-        amount: document.getElementById('edit-amount').value,
-        timestamp: updatedTimestamp,
-        category: document.getElementById('edit-category').value,
-        source: document.getElementById('edit-source').value,
-        description: document.getElementById('edit-description').value
-    };
-
-    appData.expenses = await window.api.editExpense(updatedExpense);
+    if (type === 'income') {
+        const updatedIncome = {
+            id: id,
+            amount: document.getElementById('edit-amount').value,
+            timestamp: updatedTimestamp,
+            source: document.getElementById('edit-category').value, // En ingresos usamos el select de categoría para el source
+            description: document.getElementById('edit-description').value
+        };
+        appData.incomes = await window.api.editIncome(updatedIncome);
+    } else {
+        const updatedExpense = {
+            id: id,
+            amount: document.getElementById('edit-amount').value,
+            timestamp: updatedTimestamp,
+            category: document.getElementById('edit-category').value,
+            source: document.getElementById('edit-source').value,
+            description: document.getElementById('edit-description').value
+        };
+        appData.expenses = await window.api.editExpense(updatedExpense);
+    }
     
     applyFilter();
     renderHistoryTable();
     
-    const editModal = document.getElementById('edit-expense-modal');
-    editModal.classList.add('hidden');
-    editModal.classList.remove('flex');
-    btn.innerText = originalText;
+    document.getElementById('edit-expense-modal').classList.add('hidden');
+    document.getElementById('edit-expense-modal').classList.remove('flex');
+    btn.innerText = "Guardar Cambios";
 });
-// Manejo del formulario de Ingresos
 // ====== SECCIÓN: TU OPINIÓN (FEEDBACK) ======
 
 window.openFeedbackModal = () => {

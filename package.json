@@ -1,8 +1,8 @@
 {
   "author": "Alvaro Menacho",
   "name": "haba",
-  "version": "1.0.3",
-  "description": "Tracker de gastos personales",
+  "version": "2.0.0",
+  "description": "Plataforma de finanzas personales",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
