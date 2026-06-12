@@ -187,22 +187,34 @@ ipcMain.handle('add-category', (event, category) => {
 });
 
 ipcMain.handle('edit-category', (event, { oldName, newName }) => {
+    // 1. Actualizar el nombre en la lista principal de categorías
     let categories = store.get('categories');
     const index = categories.indexOf(oldName);
     
-    if (index !== -1 && !categories.includes(newName)) {
+    if (index !== -1) {
         categories[index] = newName;
-        store.set('categories', categories);
+        store.set('categories', categories); // Guardar cambios en el disco
+    }
 
-        // Actualizar todos los gastos que tenían la categoría anterior
-        let expenses = store.get('expenses');
-        expenses = expenses.map(e => {
-            if (e.category === oldName) return { ...e, category: newName };
-            return e;
-        });
+    // 2. Actualizar el nombre de la categoría en todos los gastos existentes
+    let expenses = store.get('expenses');
+    let expensesUpdated = false;
+    
+    expenses = expenses.map(expense => {
+        if (expense.category === oldName) {
+            expensesUpdated = true;
+            return { ...expense, category: newName };
+        }
+        return expense;
+    });
+
+    // Guardar los gastos actualizados en el disco si hubo modificaciones
+    if (expensesUpdated) {
         store.set('expenses', expenses);
     }
-    return { categories: store.get('categories'), expenses: store.get('expenses') };
+
+    // 3. Retornar las listas actualizadas para que tu frontend las procese
+    return { categories, expenses };
 });
 
 ipcMain.handle('delete-category', (event, categoryName) => {

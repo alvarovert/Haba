@@ -231,8 +231,28 @@
                 </div>
             </div>
         </div>
+        <!-- MODAL: EDITAR CATEGORÍA -->
+        <div id="edit-category-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full justify-center items-center z-50">
+            <div class="bg-white p-6 rounded-xl shadow-xl w-96 transform transition-all">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Editar Categoría</h3>
+                
+                <input type="hidden" id="edit-category-old-name">
+                
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de la categoría</label>
+                <input type="text" id="edit-category-input" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none mb-6" placeholder="Ej. Comida">
+                
+                <div class="flex justify-end gap-3">
+                    <button id="close-edit-category-modal" class="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                        Cancelar
+                    </button>
+                    <button id="save-edit-category-btn" class="px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
 
-                <!-- NUEVO MODAL: GESTIÓN DE ORÍGENES DE INGRESO -->
+        <!-- NUEVO MODAL: GESTIÓN DE ORÍGENES DE INGRESO -->
         <div id="source-modal" class="fixed inset-0 bg-gray-900 bg-opacity-30 backdrop-blur-sm hidden items-center justify-center z-50 transition-opacity">
             <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 transform transition-all no-drag">
                 <div class="flex justify-between items-center mb-5">

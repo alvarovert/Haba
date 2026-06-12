@@ -170,17 +170,55 @@ btnAddCategory.addEventListener('click', async () => {
     }
 });
 
-window.editCategory = async (oldName) => {
-    const newName = prompt('Nuevo nombre para la categoría:', oldName);
-    if (newName && newName.trim() !== '' && newName !== oldName) {
-        const result = await window.api.editCategory(oldName, newName.trim());
+// --- LÓGICA DE EDICIÓN DE CATEGORÍAS (MODAL) ---
+
+// 1. Abrir el modal al hacer clic en el lápiz
+window.editCategory = (oldName) => {
+    const modal = document.getElementById('edit-category-modal');
+    const input = document.getElementById('edit-category-input');
+    const oldNameInput = document.getElementById('edit-category-old-name');
+
+    // Cargar los datos actuales en el modal
+    oldNameInput.value = oldName;
+    input.value = oldName;
+
+    // Mostrar modal
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    input.focus(); // Colocar el cursor automáticamente
+};
+
+// 2. Función para cerrar el modal
+const closeEditCategoryModal = () => {
+    const modal = document.getElementById('edit-category-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+};
+
+// Asignar el cierre al botón "Cancelar"
+document.getElementById('close-edit-category-modal').addEventListener('click', closeEditCategoryModal);
+
+// 3. Lógica para guardar los cambios
+document.getElementById('save-edit-category-btn').addEventListener('click', async () => {
+    const oldName = document.getElementById('edit-category-old-name').value;
+    const newName = document.getElementById('edit-category-input').value.trim();
+
+    if (newName && newName !== '' && newName !== oldName) {
+        // Enviar al Backend (main.js)
+        const result = await window.api.editCategory(oldName, newName);
+        
+        // Actualizar datos locales
         appData.categories = result.categories;
-        appData.expenses = result.expenses; // Actualiza gastos por si cambiaron
+        appData.expenses = result.expenses;
+
+        // Renderizar toda la interfaz con los nuevos datos
         renderCategoryList();
-        applyFilter(); // Actualiza gráficas
+        updateCategorySelect(); // Importante: actualiza los desplegables de formularios
+        applyFilter(); 
         renderHistoryTable();
     }
-};
+    closeEditCategoryModal(); // Cerrar al terminar
+});
 
 window.deleteCategory = async (categoryName) => {
     if (confirm(`¿Seguro que deseas eliminar "${categoryName}"? Los gastos con esta categoría no se borrarán.`)) {
