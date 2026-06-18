@@ -23,6 +23,7 @@ function createWindow() {
         height: 750,
         minWidth: 900,
         minHeight: 600,
+        autoHideMenuBar: true, // Asegura que no haya menús residuales
         titleBarStyle: 'hiddenInset', // Estilo macOS premium
         backgroundColor: '#fbfbfe',
         icon: path.join(__dirname, 'src/assets/icon.png'), 
@@ -311,4 +312,18 @@ ipcMain.handle('send-feedback', async (event, data) => {
         console.error("Error enviando correo:", error);
         throw error; // Lanza el error para que el frontend lo sepa
     }
+});
+
+// Manejador para cuadros de confirmación seguros en Windows
+ipcMain.handle('show-confirm', async (event, message) => {
+    const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        buttons: ['Cancelar', 'Eliminar'],
+        defaultId: 1, // El botón "Eliminar" resaltado por defecto
+        cancelId: 0,
+        title: 'Confirmación de Haba',
+        message: message
+    });
+    // Devuelve true si el usuario hizo clic en "Eliminar" (índice 1)
+    return response === 1; 
 });
