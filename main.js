@@ -25,7 +25,7 @@ function createWindow() {
         minHeight: 600,
         titleBarStyle: 'hiddenInset', // Estilo macOS premium
         backgroundColor: '#fbfbfe',
-        icon: path.join(__dirname, 'build/icon.png'), 
+        icon: path.join(__dirname, 'src/assets/icon.png'), 
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
