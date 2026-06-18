@@ -18,15 +18,24 @@ if (!store.has('incomeSources')) store.set('incomeSources', ['Trabajo']);
 let mainWindow;
 
 function createWindow() {
+    const isMac = process.platform === 'darwin';
+
     mainWindow = new BrowserWindow({
-        width: 1100,
-        height: 750,
-        minWidth: 900,
+        width: 1100, 
+        height: 750, 
+        minWidth: 900, 
         minHeight: 600,
-        autoHideMenuBar: true, // Asegura que no haya menús residuales
-        titleBarStyle: 'hiddenInset', // Estilo macOS premium
+        title: 'Haba',
+        autoHideMenuBar: true, 
+        // Si es Mac usa hiddenInset, si es Windows usa hidden
+        titleBarStyle: isMac ? 'hiddenInset' : 'hidden', 
+        // En Windows, esto dibuja los botones nativos sobre tu fondo
+        titleBarOverlay: !isMac ? {
+            color: '#fbfbfe', 
+            symbolColor: '#333333' 
+        } : false,
         backgroundColor: '#fbfbfe',
-        icon: path.join(__dirname, 'src/assets/icon.png'), 
+        icon: path.join(__dirname, 'src/assets/icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
