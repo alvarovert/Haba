@@ -20,14 +20,14 @@
       "category": "public.app-category.finance",
       "target": [
         {
-          "target": "mas",
-          "arch": "universal"
+          "target": "dmg",
+          "arch": ["universal"]
         }
       ],
       "hardenedRuntime": true,
+      "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
-      "provisioningProfile": "build/embedded.provisionprofile"
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist"
     },
     "mas": {
       "entitlements": "build/entitlements.mac.plist",
