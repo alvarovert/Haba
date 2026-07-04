@@ -18,6 +18,10 @@
     "mac": {
       "icon": "build/icon.icns",
       "category": "public.app-category.finance",
+      "preAutoEntitlements": false,
+      "notarize": {
+        "teamId": "KM46J97RLK"
+      },
       "target": [
         {
           "target": "dmg",
