@@ -221,12 +221,12 @@ document.getElementById('save-edit-category-btn').addEventListener('click', asyn
 });
 
 window.deleteCategory = async (categoryName) => {
-    if (confirm(`¿Seguro que deseas eliminar "${categoryName}"? Los gastos con esta categoría no se borrarán.`)) {
+    const confirmed = await window.api.showConfirm(`¿Seguro que deseas eliminar "${categoryName}"? Los gastos con esta categoría no se borrarán.`);
+    if (confirmed) {
         appData.categories = await window.api.deleteCategory(categoryName);
         renderCategoryList();
     }
 };
-
 
 document.getElementById('expense-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -334,7 +334,8 @@ btnAddSource.addEventListener('click', async () => {
 
 // Eliminar origen
 window.deleteSource = async (sourceName) => {
-    if (confirm(`¿Eliminar el origen "${sourceName}"?`)) {
+    const confirmed = await window.api.deleteIncomeSource(`¿Eliminar el origen "${sourceName}"?`)
+    if (confirmed) {
         appData.incomeSources = await window.api.deleteIncomeSource(sourceName);
         renderSourceList();
         updateSourceSelect();
@@ -408,16 +409,18 @@ function renderHistoryTable() {
 // ====== EDITAR Y ELIMINAR GASTOS ======
 
 window.deleteExpense = async (id) => {
-    if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
+    const confirmed = await window.api.showConfirm('¿Estás seguro de que deseas eliminar este registro?');
+    if (confirmed) {
         appData.expenses = await window.api.deleteExpense(id);
-        applyFilter(); 
-        renderHistoryTable(); 
-        updateCategorySelect(); 
+        applyFilter();
+        renderHistoryTable();
+        updateCategorySelect();
     }
 };
 // Función para borrar ingresos
 window.deleteIncome = async (id) => {
-    if (confirm('¿Eliminar este ingreso?')) {
+    const confirmed = await window.api.showConfirm('¿Eliminar este ingreso?');
+    if (confirmed) {
         appData.incomes = await window.api.deleteIncome(id);
         applyFilter();
         renderHistoryTable();

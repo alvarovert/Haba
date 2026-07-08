@@ -18,14 +18,24 @@ if (!store.has('incomeSources')) store.set('incomeSources', ['Trabajo']);
 let mainWindow;
 
 function createWindow() {
+    const isMac = process.platform === 'darwin';
+
     mainWindow = new BrowserWindow({
-        width: 1100,
-        height: 750,
-        minWidth: 900,
+        width: 1100, 
+        height: 750, 
+        minWidth: 900, 
         minHeight: 600,
-        titleBarStyle: 'hiddenInset', // Estilo macOS premium
+        title: 'Haba',
+        autoHideMenuBar: true, 
+        // Si es Mac usa hiddenInset, si es Windows usa hidden
+        titleBarStyle: isMac ? 'hiddenInset' : 'hidden', 
+        // En Windows, esto dibuja los botones nativos sobre tu fondo
+        titleBarOverlay: !isMac ? {
+            color: '#fbfbfe', 
+            symbolColor: '#333333' 
+        } : false,
         backgroundColor: '#fbfbfe',
-        icon: path.join(__dirname, 'build/icon.png'), 
+        icon: path.join(__dirname, 'src/assets/icon.png'),
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -311,4 +321,18 @@ ipcMain.handle('send-feedback', async (event, data) => {
         console.error("Error enviando correo:", error);
         throw error; // Lanza el error para que el frontend lo sepa
     }
+});
+
+// Manejador para cuadros de confirmación seguros en Windows
+ipcMain.handle('show-confirm', async (event, message) => {
+    const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        buttons: ['Cancelar', 'Eliminar'],
+        defaultId: 1, // El botón "Eliminar" resaltado por defecto
+        cancelId: 0,
+        title: 'Confirmación de Haba',
+        message: message
+    });
+    // Devuelve true si el usuario hizo clic en "Eliminar" (índice 1)
+    return response === 1; 
 });
