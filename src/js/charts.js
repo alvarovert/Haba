@@ -143,3 +143,15 @@ function renderCharts(expenses) {
         }
     });
 }
+
+// --- TRACKING DE POSTHOG: USO DE FILTROS EN DASHBOARD ---
+document.getElementById('time-filter').addEventListener('change', (event) => {
+    const filterUsed = event.target.value;
+
+    if (window.api && window.api.trackCustomEvent) {
+        window.api.trackCustomEvent('dashboard_filter_used', {
+            filter_value: filterUsed, 
+            location: 'dashboard_main'
+        });
+    }
+});

@@ -16,5 +16,6 @@ contextBridge.exposeInMainWorld('api', {
     deleteIncome: (id) => ipcRenderer.invoke('delete-income', id),
     addIncomeSource: (source) => ipcRenderer.invoke('add-income-source', source),
     deleteIncomeSource: (sourceName) => ipcRenderer.invoke('delete-income-source', sourceName),
-    
+    trackUiEvent: (sectionName) => ipcRenderer.invoke('track-ui-event', sectionName),
+    trackCustomEvent: (eventName, properties) => ipcRenderer.invoke('track-custom-event', eventName, properties),
 });

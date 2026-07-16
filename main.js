@@ -6,6 +6,20 @@ const ObjectsToCsv = require('objects-to-csv');
 const fs = require('fs');
 const nodemailer = require('nodemailer'); 
 const store = new Store();
+const { PostHog } = require('posthog-node');
+const crypto = require('crypto'); // Nativo de Node.js
+// Inicializar PostHog
+const client = new PostHog(
+    'phc_pCZhb7BRbNbaw37HGLx34u7kwWTtuCxUtpEQAtVaa4gb',
+    { host: 'https://us.i.posthog.com' } // Cámbialo si tu host es eu.i.posthog.com
+);
+
+// 2. Generar y mantener un Identificador Único por Usuario
+let userId = store.get('userId');
+if (!userId) {
+    userId = crypto.randomUUID();
+    store.set('userId', userId);
+}
 
 // Inicializar datos si no existen
 if (!store.has('expenses')) store.set('expenses', []);
@@ -118,6 +132,13 @@ app.whenReady().then(() => {
     createCustomMenu(); // Configura el menú personalizado
     createWindow();
 
+    // Rastrear inicio de sesión y sistema operativo
+    client.capture({
+        distinctId: userId,
+        event: 'app_started',
+        properties: { os: process.platform }
+    });
+
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
@@ -139,6 +160,7 @@ ipcMain.handle('get-data', () => {
 });
 
 ipcMain.handle('add-expense', (event, expense) => {
+    client.capture({ distinctId: userId, event: 'btn_add_expense_clicked' });
     const expenses = store.get('expenses');
     const newExpense = {
         ...expense,
@@ -152,6 +174,7 @@ ipcMain.handle('add-expense', (event, expense) => {
 
 // Manejo de Ingresos
 ipcMain.handle('add-income', (event, income) => {
+    client.capture({ distinctId: userId, event: 'btn_add_income_clicked' });
     const incomes = store.get('incomes');
     const newIncome = {
         ...income,
@@ -164,6 +187,7 @@ ipcMain.handle('add-income', (event, income) => {
 });
 
 ipcMain.handle('delete-income', (event, id) => {
+    client.capture({ distinctId: userId, event: 'btn_delete_income_clicked' });
     let incomes = store.get('incomes');
     incomes = incomes.filter(i => i.id !== id);
     store.set('incomes', incomes);
@@ -172,6 +196,7 @@ ipcMain.handle('delete-income', (event, id) => {
 
 // Manejo de Orígenes de Ingreso
 ipcMain.handle('add-income-source', (event, source) => {
+    client.capture({ distinctId: userId, event: 'btn_add_income_source_clicked' });
     const sources = store.get('incomeSources');
     if (!sources.includes(source)) {
         sources.push(source);
@@ -181,6 +206,7 @@ ipcMain.handle('add-income-source', (event, source) => {
 });
 
 ipcMain.handle('delete-income-source', (event, sourceName) => {
+    client.capture({ distinctId: userId, event: 'btn_delete_income_source_clicked' });
     let sources = store.get('incomeSources');
     sources = sources.filter(s => s !== sourceName);
     store.set('incomeSources', sources);
@@ -188,6 +214,7 @@ ipcMain.handle('delete-income-source', (event, sourceName) => {
 });
 
 ipcMain.handle('add-category', (event, category) => {
+    client.capture({ distinctId: userId, event: 'btn_add_category_clicked' });
     const categories = store.get('categories');
     if (!categories.includes(category)) {
         categories.push(category);
@@ -197,6 +224,7 @@ ipcMain.handle('add-category', (event, category) => {
 });
 
 ipcMain.handle('edit-category', (event, { oldName, newName }) => {
+    client.capture({ distinctId: userId, event: 'btn_edit_category_clicked' });
     // 1. Actualizar el nombre en la lista principal de categorías
     let categories = store.get('categories');
     const index = categories.indexOf(oldName);
@@ -228,12 +256,14 @@ ipcMain.handle('edit-category', (event, { oldName, newName }) => {
 });
 
 ipcMain.handle('delete-category', (event, categoryName) => {
+    client.capture({ distinctId: userId, event: 'btn_delete_category_clicked' });
     let categories = store.get('categories');
     categories = categories.filter(c => c !== categoryName);
     store.set('categories', categories);
     return categories;
 });
 ipcMain.handle('delete-expense', (event, id) => {
+    client.capture({ distinctId: userId, event: 'btn_delete_expense_clicked' });
     let expenses = store.get('expenses');
     expenses = expenses.filter(e => e.id !== id);
     store.set('expenses', expenses);
@@ -241,6 +271,7 @@ ipcMain.handle('delete-expense', (event, id) => {
 });
 
 ipcMain.handle('edit-expense', (event, updatedExpense) => {
+    client.capture({ distinctId: userId, event: 'btn_edit_expense_clicked' });
     let expenses = store.get('expenses');
     const index = expenses.findIndex(e => e.id === updatedExpense.id);
     if (index !== -1) {
@@ -252,6 +283,7 @@ ipcMain.handle('edit-expense', (event, updatedExpense) => {
 });
 
 ipcMain.handle('edit-income', (event, updatedIncome) => {
+    client.capture({ distinctId: userId, event: 'btn_edit_income_clicked' });
     let incomes = store.get('incomes');
     const index = incomes.findIndex(i => i.id === updatedIncome.id);
     if (index !== -1) {
@@ -262,6 +294,7 @@ ipcMain.handle('edit-income', (event, updatedIncome) => {
 });
 
 ipcMain.handle('export-csv', async () => {
+    client.capture({ distinctId: userId, event: 'btn_export_csv_clicked' });
     const expenses = store.get('expenses');
     if (expenses.length === 0) return { success: false, msg: 'No hay datos' };
 
@@ -325,6 +358,7 @@ ipcMain.handle('send-feedback', async (event, data) => {
 
 // Manejador para cuadros de confirmación seguros en Windows
 ipcMain.handle('show-confirm', async (event, message) => {
+    client.capture({ distinctId: userId, event: 'btn_confirm_clicked' });
     const { response } = await dialog.showMessageBox(mainWindow, {
         type: 'warning',
         buttons: ['Cancelar', 'Eliminar'],
@@ -335,4 +369,23 @@ ipcMain.handle('show-confirm', async (event, message) => {
     });
     // Devuelve true si el usuario hizo clic en "Eliminar" (índice 1)
     return response === 1; 
+});
+
+ipcMain.handle('track-ui-event', (event, sectionName) => {
+    client.capture({ distinctId: userId, event: 'section_viewed', properties: { section: sectionName } });
+});
+
+// --- POSTHOG: EVENTOS PERSONALIZADOS CON PROPIEDADES ---
+ipcMain.handle('track-custom-event', (event, eventName, properties) => {
+    // Asegurarnos de que el cliente y el ID existan
+    if (typeof client !== 'undefined' && userId) { 
+        client.capture({
+            distinctId: userId,
+            event: eventName,
+            properties: properties
+        });
+    }
+});
+app.on('before-quit', async () => {
+    await client.shutdown();
 });
