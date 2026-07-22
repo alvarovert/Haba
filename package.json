@@ -1,7 +1,7 @@
 {
   "author": "Alvaro Menacho",
   "name": "haba",
-  "version": "2.1.0",
+  "version": "2.1.2",
   "description": "Plataforma de finanzas personales",
   "main": "main.js",
   "scripts": {

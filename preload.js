@@ -18,4 +18,5 @@ contextBridge.exposeInMainWorld('api', {
     deleteIncomeSource: (sourceName) => ipcRenderer.invoke('delete-income-source', sourceName),
     trackUiEvent: (sectionName) => ipcRenderer.invoke('track-ui-event', sectionName),
     trackCustomEvent: (eventName, properties) => ipcRenderer.invoke('track-custom-event', eventName, properties),
+    getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 });

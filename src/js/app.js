@@ -6,6 +6,8 @@ let appData = { expenses: [], categories: [], incomes: [], incomeSources: [] };
 // Inicialización
 document.addEventListener('DOMContentLoaded', async () => {
     appData = await window.api.getData();
+    const appVersion = await window.api.getAppVersion();
+    document.getElementById('app-version-display').innerText = `Haba ${appVersion}`;
     updateCategorySelect();
     updateSourceSelect(); 
     applyFilter();

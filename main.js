@@ -11,7 +11,7 @@ const crypto = require('crypto'); // Nativo de Node.js
 // Inicializar PostHog
 const client = new PostHog(
     'phc_pCZhb7BRbNbaw37HGLx34u7kwWTtuCxUtpEQAtVaa4gb',
-    { host: 'https://us.i.posthog.com' } // Cámbialo si tu host es eu.i.posthog.com
+    { host: 'https://us.i.posthog.com' } 
 );
 
 // 2. Generar y mantener un Identificador Único por Usuario
@@ -157,6 +157,10 @@ ipcMain.handle('get-data', () => {
         incomes: store.get('incomes'),
         incomeSources: store.get('incomeSources')
     };
+});
+
+ipcMain.handle('get-app-version', () => {
+    return app.getVersion(); 
 });
 
 ipcMain.handle('add-expense', (event, expense) => {
