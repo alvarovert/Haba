@@ -5,10 +5,10 @@ let progressChartInstance = null;
 Chart.defaults.font.family = "'Inter', sans-serif";
 Chart.defaults.color = '#9CA3AF';
 
-function renderCharts(expenses) {
+function renderCharts(expenses, incomesData) {
     // 1. OBTENER FILTRO ACTUAL PARA EL GRÁFICO DE PROGRESO
     const filterValue = document.getElementById('time-filter').value;
-    const incomes = appData.incomes || [];
+    const incomes = incomesData || appData.incomes || [];
     
     // 2. PROCESAR DATOS PARA BAR Y DOUGHNUT (Gastos)
     const dates = {};

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('app-version-display').innerText = `Haba ${appVersion}`;
     updateCategorySelect();
     updateSourceSelect(); 
+    populateMonthSelector();
     applyFilter();
     renderHistoryTable(); 
 });
@@ -32,27 +33,70 @@ function switchTab(tabId) {
 
 // Filtros y Renderizado
 document.getElementById('time-filter').addEventListener('change', applyFilter);
+document.getElementById('other-month-filter').addEventListener('change', applyFilter); 
 
-// 2. CORRECCIÓN: applyFilter debe pasar los gastos filtrados a renderCharts
-function applyFilter() {
-    const filter = document.getElementById('time-filter').value;
-    const now = new Date();
+//Filtro especifico para cada mes
+function populateMonthSelector() {
+    const specificMonthFilter = document.getElementById('other-month-filter');
+    const allItems = [...(appData.expenses || []), ...(appData.incomes || [])];
     
-    let filteredExpenses = appData.expenses.filter(e => {
-        const date = new Date(e.timestamp);
-        if (filter === 'today') return date.toDateString() === now.toDateString();
-        if (filter === 'month') return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-        if (filter === 'quarter') {
-            const quarterObj = Math.floor(now.getMonth() / 3);
-            const expenseQuarter = Math.floor(date.getMonth() / 3);
-            return quarterObj === expenseQuarter && date.getFullYear() === now.getFullYear();
+    // Extraer meses en formato YYYY-MM
+    const uniqueMonths = [...new Set(allItems.map(item => {
+        const date = new Date(item.timestamp);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
+    }))];
+
+    // Ordenar de más reciente a más antiguo
+    uniqueMonths.sort().reverse();
+
+    // Nombres de los meses para mostrar bonito
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+    specificMonthFilter.innerHTML = uniqueMonths.map(monthStr => {
+        const [year, month] = monthStr.split('-');
+        const monthName = monthNames[parseInt(month) - 1];
+        return `<option value="${monthStr}">${monthName} ${year}</option>`;
+    }).join('');
+}
+
+
+function applyFilter() {
+const timeFilter = document.getElementById('time-filter').value;
+    const specificMonthFilter = document.getElementById('other-month-filter');
+    const now = new Date(); 
+
+    let filteredExpenses = appData.expenses || [];
+    let filteredIncomes = appData.incomes || [];
+
+    // Controlar visibilidad del segundo selector
+    if (timeFilter === 'other-month') {
+        specificMonthFilter.style.display = 'inline-block';
+    } else {
+        specificMonthFilter.style.display = 'none';
+    }
+
+    // Lógica de filtrado
+    if (timeFilter === 'today') {
+        const todayStr = now.toISOString().split('T')[0];
+        filteredExpenses = filteredExpenses.filter(e => e.timestamp.startsWith(todayStr));
+        filteredIncomes = filteredIncomes.filter(i => i.timestamp.startsWith(todayStr));
+    } else if (timeFilter === 'month') {
+        const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        filteredExpenses = filteredExpenses.filter(e => e.timestamp.startsWith(currentMonthStr));
+        filteredIncomes = filteredIncomes.filter(i => i.timestamp.startsWith(currentMonthStr));
+    } else if (timeFilter === 'other-month') {
+        const selectedMonth = specificMonthFilter.value; // Ej: "2026-07"
+        if (selectedMonth) {
+            filteredExpenses = filteredExpenses.filter(e => e.timestamp.startsWith(selectedMonth));
+            filteredIncomes = filteredIncomes.filter(i => i.timestamp.startsWith(selectedMonth));
         }
-        return true;
-    });
+    }
 
     updateDashboardStats(filteredExpenses);
     // renderCharts ahora recibe los gastos filtrados y usará appData.incomes internamente
-    renderCharts(filteredExpenses); 
+    renderCharts(filteredExpenses, filteredIncomes); 
 }
 
 function updateDashboardStats(expenses) {
