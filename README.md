@@ -15,7 +15,7 @@ Llevar una gestión de finanzas personales suele requerir plantillas complejas d
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 * **Frontend & UI:** HTML5, CSS3, JavaScript (ES6+).
 * **Desktop Engine:** Electron.js (gestión de ventana principal e integración de sistema operativo mediante IPC con `preload.js` y `main.js`).
@@ -24,7 +24,7 @@ Llevar una gestión de finanzas personales suele requerir plantillas complejas d
 
 ---
 
-## 🚀 Instalación y Compilación
+## Instalación y Compilación
 
 ### Requisitos Previos
 
