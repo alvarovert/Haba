@@ -1,14 +1,14 @@
-# Haba — Control de Gastos Personales y Finanzas
+# Haba — Gestor de Finanzas Personales
 
-> Aplicación de escritorio intuitiva y ligera diseñada para registrar el gasto diario, categorizar presupuestos y mejorar la salud financiera personal.
+> Aplicación de finanzas personales diseñada para facilitar al usuario el registro de gastos, ingresos y la visualización de su salud financiera.
 
 ---
 
 ## Problema que Resuelve
 
-Llevar una gestión de finanzas personales suele requerir plantillas complejas de hojas de cálculo o aplicaciones móviles saturadas de publicidad y suscripciones mensuales.
+Comunmente se tiene la idea de que las finanzas personales son tediosas, complejas o que requieren de mucha preparación. En gran parte es porque las herramientas que se tienen para esto son innecesariamente intrincadas.
 
-**Haba** resuelve este problema ofreciendo una solución de escritorio centrada en la practicidad y la privacidad:
+**Haba** esta enfocada en ser intuitiva y brillante para el usuario permitiendole llevar sus finanzas de forma muy cómoda y agradable.
 * **Registro rápido:** Permite ingresar y categorizar ingresos y gastos diarios en pocos clics.
 * **Filtros dinámicos:** Facilita la visualización de hábitos de consumo por categorías y períodos.
 * **Privacidad local:** Control total de los datos financieros en el dispositivo del usuario sin exponer información sensible a servicios externos.
