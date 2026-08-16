@@ -1,6 +1,6 @@
 # Haba — Gestor de Finanzas Personales
 
-> Aplicación de finanzas personales diseñada para facilitar al usuario el registro de gastos, ingresos y la visualización de su salud financiera.
+> Aplicación diseñada para promover y accesibilizar las finanzas personales proporcionándole a los usuarios una herramienta con la cual se sientan cómodos y a gusto conociendo su salud financiera
 
 ---
 
