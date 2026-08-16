@@ -4,22 +4,22 @@
 
 ---
 
-## Problema que Resuelve
+## El Proposito de Haba 
 
 Comunmente se tiene la idea de que las finanzas personales son tediosas, complejas o que requieren de mucha preparación. En gran parte es porque las herramientas que se tienen para esto son innecesariamente intrincadas.
 
-**Haba** esta enfocada en ser intuitiva y brillante para el usuario permitiendole llevar sus finanzas de forma muy cómoda y agradable.
-* **Registro rápido:** Permite ingresar y categorizar ingresos y gastos diarios en pocos clics.
-* **Filtros dinámicos:** Facilita la visualización de hábitos de consumo por categorías y períodos.
-* **Privacidad local:** Control total de los datos financieros en el dispositivo del usuario sin exponer información sensible a servicios externos.
+**Haba** esta enfocada en ser intuitiva y brillante para el usuario, permitiendole llevar sus finanzas de forma muy cómoda y agradable.
+* **Uso rápido e intuitivo:**  En cuanto ingresas a Haba sabes como registrar tus gastos e ingresos, en ese instante ya puedes entender tus propias finanzas.
+* **Dashboard Estetico y Comprensible:** El Dashboard de Haba no solo es sencillo de entender, es muy estético. En todo sentido es agradable de ver los gráficos y como van cambiando de acuerdo a tus registros.
+* **Comunicación con el Usuario:**  Haba tiene un apartado donde los usuarios pueden mandar sus propias recomendaciones, problemas u opiniones. Esto me nos constante feedback y nos permite seguir mejorando haba escuchando activamente a los usuarios.
 
 ---
 
-## Stack Tecnológico
+## Stack de desarrollo
 
-* **Frontend & UI:** HTML5, CSS3, JavaScript (ES6+).
+* **Frontend & UI:** HTML5, CSS3, JavaScript.
 * **Desktop Engine:** Electron.js (gestión de ventana principal e integración de sistema operativo mediante IPC con `preload.js` y `main.js`).
-* **Telemetría & Métricas:** PostHog SDK (para análisis del uso de producto y rendimiento).
+* **Telemetría & Métricas:** PostHog SDK (para análisis del uso de Haba y filtrar funciones y estrategia).
 * **Empaquetado:** Electron Builder con soporte para distribuciones de Windows y macOS.
 
 ---
